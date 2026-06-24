@@ -1,0 +1,15 @@
+[Unit]
+Description=Pictureframe Playback
+After=graphical.target
+
+[Service]
+Type=simple
+User=kenneth
+Environment=HOME=/home/kenneth
+ExecStart=/home/kenneth/pictureframe/scripts/run-playback.sh
+Restart=on-failure
+RestartSec=5
+SuccessExitStatus=4
+
+[Install]
+WantedBy=graphical.target

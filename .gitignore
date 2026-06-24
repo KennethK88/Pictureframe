@@ -1,0 +1,8 @@
+media/
+cache/
+logs/
+playlists/
+
+config/mqtt-control.env
+
+*.log
