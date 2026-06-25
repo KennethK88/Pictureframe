@@ -1,15 +1,17 @@
 [Unit]
 Description=Pictureframe Playback
-After=graphical.target
+After=network-online.target
+Wants=network-online.target
 
 [Service]
 Type=simple
 User=kenneth
 Environment=HOME=/home/kenneth
+WorkingDirectory=/home/kenneth/pictureframe
 ExecStart=/home/kenneth/pictureframe/scripts/run-playback.sh
 Restart=on-failure
 RestartSec=5
 SuccessExitStatus=4
 
 [Install]
-WantedBy=graphical.target
+WantedBy=multi-user.target
