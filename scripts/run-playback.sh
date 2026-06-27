@@ -30,6 +30,7 @@ exec mpv \
   --hwdec=v4l2m2m \
   --drm-drmprime-video-plane=primary \
   --drm-draw-plane=overlay \
+  --audio-device='alsa/hdmi:CARD=vc4hdmi,DEV=0' \
   --image-display-duration="$MPV_IMAGE_DURATION_SECONDS" \
   --vf="lavfi=[scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,format=yuv420p]" \
   --term-playing-msg='NOW PLAYING: ${path}' \
