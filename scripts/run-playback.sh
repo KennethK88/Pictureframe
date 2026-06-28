@@ -3,6 +3,35 @@ set -euo pipefail
 
 source "$HOME/pictureframe/config/pictureframe.env"
 
+wait_for_hdmi()
+{
+    echo "Waiting for HDMI connection..."
+
+    local last_status=""
+
+    while true; do
+        for status_file in /sys/class/drm/card*-HDMI-A-*/status; do
+            [ -e "$status_file" ] || continue
+
+            local status
+            status=$(cat "$status_file")
+
+            if [ "$status" != "$last_status" ]; then
+                echo "HDMI status: $status_file = $status"
+                last_status="$status"
+            fi
+
+            if [ "$status" = "connected" ]; then
+                echo "HDMI connected. Waiting briefly for DRM to settle..."
+                sleep 3
+                return 0
+            fi
+        done
+
+        sleep 2
+    done
+}
+
 echo "Preparing pictureframe playback..."
 
 "$PICTUREFRAME_HOME/scripts/sync-media.sh"
@@ -15,6 +44,8 @@ if [ "$MEDIA_COUNT" -eq 0 ]; then
     echo "No media files found in playlist."
     exit 1
 fi
+
+wait_for_hdmi
 
 echo "Starting pictureframe playback..."
 echo "Playlist: $PLAYLIST_FILE"
