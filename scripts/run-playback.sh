@@ -45,6 +45,9 @@ if [ "$MEDIA_COUNT" -eq 0 ]; then
     exit 1
 fi
 
+echo "Trying to wake TV via CEC..."
+timeout 3s sh -c 'echo "as" | cec-client -s -d 1 -t p' >/dev/null 2>&1 || true
+
 wait_for_hdmi
 
 echo "Starting pictureframe playback..."
