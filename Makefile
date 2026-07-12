@@ -12,7 +12,7 @@ RSYNC = rsync -av
 SERVICE_NAME_PLAYBACK = pictureframe-playback.service
 SERVICE_NAME_MQTT = pictureframe-mqtt-control.service
 
-.PHONY: ping ssh-test status log live-log stop-playback stop-mqtt stop-all start-playback start-mqtt start-all restart-playback restart-mqtt restart-all deploy-configs deploy-scripts deploy-services deploy-all install-services temp off
+.PHONY: ping ssh-test status log live-log stop-playback stop-mqtt stop-all start-playback start-mqtt start-all restart-playback restart-mqtt restart-all deploy-configs deploy-scripts deploy-services deploy-all install-services temp off reboot
 
 ping:
 	ping -c 1 $(PI_HOST)
@@ -78,3 +78,6 @@ temp:
 
 off: stop-playback
 	$(SSH) "sync && sudo poweroff"
+
+reboot: stop-playback
+	$(SSH) "sync && sudo reboot"
