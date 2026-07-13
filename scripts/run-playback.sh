@@ -67,5 +67,12 @@ exec mpv \
   --audio-device='alsa/hdmi:CARD=vc4hdmi,DEV=0' \
   --image-display-duration="$MPV_IMAGE_DURATION_SECONDS" \
   --vf="lavfi=[scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,format=yuv420p]" \
+  --script="$PICTUREFRAME_HOME/scripts/location-overlay.lua" \
+  --script-opts="location_overlay-image_duration=$MPV_IMAGE_DURATION_SECONDS,location_overlay-display_duration=5" \
+  --osd-align-x=right \
+  --osd-align-y=bottom \
+  --osd-font-size=42 \
+  --osd-margin-x=60 \
+  --osd-margin-y=60 \
   --term-playing-msg='NOW PLAYING: ${path}' \
   --playlist="$PLAYLIST_FILE"
