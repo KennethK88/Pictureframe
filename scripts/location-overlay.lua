@@ -48,7 +48,12 @@ local function on_file_loaded()
         current_location = extract_location(path)
     end
 
-    mp.osd_message("", 0)
+    -- Trigger a tiny OSD refresh shortly after loading a new file.
+    -- On DRM/gpu output, static images can otherwise stay visually stale
+    -- until the next real OSD message appears.
+    mp.add_timeout(0.2, function()
+        mp.osd_message(" ", 0.1)
+    end)
 end
 
 local function tick()
