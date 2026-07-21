@@ -2,6 +2,7 @@ media/
 cache/
 logs/
 playlists/
+scripts/__pycache__
 
 config/mqtt-control.env
 
