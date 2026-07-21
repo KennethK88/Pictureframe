@@ -35,7 +35,13 @@ wait_for_hdmi()
 echo "Preparing pictureframe playback..."
 
 "$PICTUREFRAME_HOME/scripts/sync-media.sh"
-"$PICTUREFRAME_HOME/scripts/prepare-media.sh"
+
+if [ -s "$CHANGED_MEDIA_FILE" ]; then
+    "$PICTUREFRAME_HOME/scripts/prepare-media.sh" "$CHANGED_MEDIA_FILE"
+else
+    echo "No new or changed media. Skipping media preparation."
+fi
+
 "$PICTUREFRAME_HOME/scripts/create-playlist.sh"
 
 MEDIA_COUNT=$(wc -l < "$PLAYLIST_FILE")
