@@ -18,12 +18,33 @@ is_video_file() {
     esac
 }
 
+is_image_file() {
+    local file="${1,,}"
+
+    case "$file" in
+        *.jpg|*.jpeg|*.png)
+            return 0
+            ;;
+        *)
+            return 1
+            ;;
+    esac
+}
+
 get_cache_file_path() {
     local file="$1"
     local relative="${file#$MEDIA_DIR/}"
     local without_extension="${relative%.*}"
 
     echo "$CACHE_DIR/$without_extension.mp4"
+}
+
+get_image_cache_file_path() {
+    local file="$1"
+    local relative="${file#$MEDIA_DIR/}"
+    local without_extension="${relative%.*}"
+
+    echo "$IMAGE_CACHE_DIR/$without_extension.jpg"
 }
 
 : > "$PLAYLIST_FILE"
@@ -38,6 +59,14 @@ find "$MEDIA_DIR" -type f \( \
 | while IFS= read -r -d '' file; do
     if is_video_file "$file"; then
         cache_file="$(get_cache_file_path "$file")"
+
+        if [ -f "$cache_file" ]; then
+            echo "$cache_file" >> "$PLAYLIST_FILE"
+        else
+            echo "$file" >> "$PLAYLIST_FILE"
+        fi
+    elif is_image_file "$file"; then
+        cache_file="$(get_image_cache_file_path "$file")"
 
         if [ -f "$cache_file" ]; then
             echo "$cache_file" >> "$PLAYLIST_FILE"
