@@ -19,7 +19,7 @@ local function extract_location(path)
     local folder = path:match("/media/([^/]+)/")
 
     if folder == nil then
-        folder = path:match("/cache/optimized/([^/]+)/")
+        folder = path:match("/cache/[^/]+/([^/]+)/")
     end
 
     if folder == nil then
