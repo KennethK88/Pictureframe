@@ -45,6 +45,22 @@ get_video_rotation() {
         | head -n 1
 }
 
+get_video_fps() {
+    local file="$1"
+
+    ffprobe -v error \
+        -select_streams v:0 \
+        -show_entries stream=avg_frame_rate \
+        -of default=nw=1:nk=1 \
+        "$file" 2>/dev/null \
+        | head -n 1 \
+        | awk -F/ '
+            $2 == 0 { print 0; next }
+            $2 == "" { print int($1 + 0.5); next }
+            { print int(($1 / $2) + 0.5) }
+        '
+}
+
 get_cache_file_path() {
     local file="$1"
     local relative="${file#$MEDIA_DIR/}"
@@ -61,15 +77,18 @@ get_image_cache_file_path() {
     echo "$IMAGE_CACHE_DIR/$without_extension.jpg"
 }
 
-prepare_rotated_video() {
+prepare_optimized_video() {
     local file="$1"
     local rotation="$2"
+    local fps="$3"
     local output
     local output_dir
-    local filter
+    local filter=""
+    local temp_output
 
     output="$(get_cache_file_path "$file")"
     output_dir="$(dirname "$output")"
+    temp_output="${output}.tmp.mp4"
 
     mkdir -p "$output_dir"
 
@@ -80,23 +99,37 @@ prepare_rotated_video() {
 
     case "$rotation" in
         -90)
-            filter="transpose=clock,$SCALE_FILTER"
+            filter="transpose=clock"
             ;;
         90)
-            filter="transpose=cclock,$SCALE_FILTER"
+            filter="transpose=cclock"
             ;;
         180|-180)
-            filter="transpose=clock,transpose=clock,$SCALE_FILTER"
-            ;;
-        *)
-            return 0
+            filter="transpose=clock,transpose=clock"
             ;;
     esac
 
-    echo "Optimizing rotated video:"
+    if [ "$fps" -gt 31 ]; then
+        if [ -n "$filter" ]; then
+            filter="$filter,fps=30"
+        else
+            filter="fps=30"
+        fi
+    fi
+
+    if [ -n "$filter" ]; then
+        filter="$filter,$SCALE_FILTER"
+    else
+        filter="$SCALE_FILTER"
+    fi
+
+    echo "Optimizing video:"
     echo "  Source:   $file"
     echo "  Rotation: $rotation"
+    echo "  FPS:      $fps"
     echo "  Target:   $output"
+
+    rm -f "$temp_output"
 
     ffmpeg -nostdin -y \
    	 -noautorotate \
@@ -114,7 +147,9 @@ prepare_rotated_video() {
    	 -movflags +faststart \
    	 -map_metadata -1 \
    	 -metadata:s:v:0 rotate=0 \
-   	 "$output"
+   	 "$temp_output"
+
+    mv "$temp_output" "$output"
 }
 
 prepare_high_res_image() {
@@ -181,18 +216,33 @@ prepare_media_file() {
     fi
 
     if is_video_file "$file"; then
+        local fps
+        local needs_optimization=0
+
         if [ "$force" = "1" ]; then
             rm -f "$(get_cache_file_path "$file")"
         fi
 
         rotation="$(get_video_rotation "$file" || true)"
         rotation="${rotation%%.*}"
+        rotation="${rotation:-0}"
+
+        fps="$(get_video_fps "$file" || true)"
+        fps="${fps:-0}"
 
         case "$rotation" in
             -90|90|180|-180)
-                prepare_rotated_video "$file" "$rotation"
+                needs_optimization=1
                 ;;
         esac
+
+        if [ "$fps" -gt 31 ]; then
+            needs_optimization=1
+        fi
+
+        if [ "$needs_optimization" = "1" ]; then
+            prepare_optimized_video "$file" "$rotation" "$fps"
+        fi
 
     elif is_image_file "$file"; then
         if [ "$force" = "1" ]; then
