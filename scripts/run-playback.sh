@@ -76,7 +76,7 @@ exec mpv \
   --script="$PICTUREFRAME_HOME/scripts/location-overlay.lua" \
   --script-opts="location_overlay-image_duration=$MPV_IMAGE_DURATION_SECONDS,location_overlay-display_duration=5" \
   --osd-align-x=right \
-  --osd-align-y=bottom \
+  --osd-align-y=top \
   --osd-font-size=42 \
   --osd-margin-x=60 \
   --osd-margin-y=60 \
