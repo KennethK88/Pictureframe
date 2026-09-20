@@ -11,8 +11,20 @@ RSYNC = rsync -av
 
 SERVICE_NAME_PLAYBACK = pictureframe-playback.service
 SERVICE_NAME_MQTT = pictureframe-mqtt-control.service
+SERVICE_NAME_FAN = pictureframe-fan-controller.service
 
-.PHONY: ping ssh-test status log live-log stop-playback stop-mqtt stop-all start-playback start-mqtt start-all restart-playback restart-mqtt restart-all deploy-configs deploy-scripts deploy-services deploy-all install-services temp off reboot throttled
+CXX = g++
+CXXFLAGS = -std=c++17 -Wall -Wextra -Wpedantic \
+           -Ifan-controller/include \
+           -Ifan-controller/common \
+		   -Ifan-controller/config
+
+LDLIBS = -lgpiodcxx -lgpiod
+
+FAN_CONTROLLER_TARGET = fan-controller/build/pictureframe-fan-controller
+FAN_CONTROLLER_DIR = fan-controller
+
+.PHONY: ping ssh-test status log live-log stop-playback stop-mqtt stop-all stop-fan start-playback start-mqtt start-fan start-all restart-playback restart-mqtt restart-fan restart-all deploy-configs deploy-scripts deploy-services deploy-all install-fan-service install-services temp off reboot throttled deploy-fan-controller build-fan-controller
 
 ping:
 	ping -c 1 $(PI_HOST)
@@ -23,6 +35,7 @@ ssh-test:
 status:
 	$(SSH) systemctl --no-pager status $(SERVICE_NAME_PLAYBACK) || true
 	$(SSH) systemctl --no-pager status $(SERVICE_NAME_MQTT) || true 
+	$(SSH) systemctl --no-pager status $(SERVICE_NAME_FAN) || true
 
 log:
 	$(SSH) "journalctl --no-pager -u $(SERVICE_NAME_PLAYBACK) -n 30"
@@ -36,7 +49,10 @@ stop-playback:
 stop-mqtt:
 	$(SSH) sudo systemctl stop $(SERVICE_NAME_MQTT)
 
-stop-all: stop-playback stop-mqtt
+stop-fan:
+	$(SSH) sudo systemctl stop $(SERVICE_NAME_FAN)
+
+stop-all: stop-playback stop-mqtt stop-fan
 
 start-playback:
 	$(SSH) sudo systemctl start $(SERVICE_NAME_PLAYBACK)
@@ -44,7 +60,10 @@ start-playback:
 start-mqtt:
 	$(SSH) sudo systemctl start $(SERVICE_NAME_MQTT)
 
-start-all: start-playback start-mqtt
+start-fan:
+	$(SSH) sudo systemctl start $(SERVICE_NAME_FAN)
+
+start-all: start-playback start-mqtt start-fan
 
 restart-playback:
 	$(SSH) sudo systemctl restart $(SERVICE_NAME_PLAYBACK)
@@ -52,7 +71,10 @@ restart-playback:
 restart-mqtt:
 	$(SSH) sudo systemctl restart $(SERVICE_NAME_MQTT)
 
-restart-all: restart-playback restart-mqtt
+restart-fan:
+	$(SSH) sudo systemctl restart $(SERVICE_NAME_FAN)
+
+restart-all: restart-playback restart-mqtt restart-fan
 
 deploy-configs:
 	$(SSH) "mkdir -p $(PI_TARGET_DIR)/config"
@@ -68,9 +90,14 @@ deploy-services:
 
 deploy-all: deploy-configs deploy-scripts deploy-services
 
+install-fan-service: deploy-services
+	$(SSH) "sudo install -m 644 $(PI_TARGET_DIR)/systemd/$(SERVICE_NAME_FAN) $(PI_SERVICE_TARGET_DIR)/$(SERVICE_NAME_FAN)"
+	$(SSH) "sudo systemctl daemon-reload"
+
 install-services: deploy-services
 	$(SSH) "sudo install -m 644 $(PI_TARGET_DIR)/systemd/$(SERVICE_NAME_PLAYBACK) $(PI_SERVICE_TARGET_DIR)/$(SERVICE_NAME_PLAYBACK)"
 	$(SSH) "sudo install -m 644 $(PI_TARGET_DIR)/systemd/$(SERVICE_NAME_MQTT) $(PI_SERVICE_TARGET_DIR)/$(SERVICE_NAME_MQTT)"
+	$(SSH) "sudo install -m 644 $(PI_TARGET_DIR)/systemd/$(SERVICE_NAME_FAN) $(PI_SERVICE_TARGET_DIR)/$(SERVICE_NAME_FAN)"
 	$(SSH) "sudo systemctl daemon-reload"
 
 temp:
@@ -84,3 +111,18 @@ reboot: stop-playback
 
 throttled:
 	$(SSH) "vcgencmd get_throttled"
+
+deploy-fan-controller:
+	$(SSH) "mkdir -p $(PI_TARGET_DIR)/$(FAN_CONTROLLER_DIR)"
+	$(RSYNC) --delete $(FAN_CONTROLLER_DIR)/ $(REMOTE)/$(FAN_CONTROLLER_DIR)/
+
+build-fan-controller: deploy-fan-controller
+	$(SSH) "mkdir -p $(PI_TARGET_DIR)/$(FAN_CONTROLLER_DIR)/build && \
+	cd $(PI_TARGET_DIR) && \
+	$(CXX) $(CXXFLAGS) \
+	$(FAN_CONTROLLER_DIR)/src/main.cpp \
+	$(FAN_CONTROLLER_DIR)/src/CpuTemperatureReader.cpp \
+	$(FAN_CONTROLLER_DIR)/src/FanController.cpp \
+	$(FAN_CONTROLLER_DIR)/src/GpioFanOutput.cpp \
+	-o $(FAN_CONTROLLER_TARGET) \
+	$(LDLIBS)"
