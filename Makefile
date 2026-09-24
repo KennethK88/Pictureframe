@@ -24,7 +24,7 @@ LDLIBS = -lgpiodcxx -lgpiod
 FAN_CONTROLLER_TARGET = fan-controller/build/pictureframe-fan-controller
 FAN_CONTROLLER_DIR = fan-controller
 
-.PHONY: ping ssh-test status log live-log stop-playback stop-mqtt stop-all stop-fan start-playback start-mqtt start-fan start-all restart-playback restart-mqtt restart-fan restart-all deploy-configs deploy-scripts deploy-services deploy-all install-fan-service install-services temp off reboot throttled deploy-fan-controller build-fan-controller
+.PHONY: ping ssh-test status log live-log stop-playback stop-mqtt stop-all stop-fan start-playback start-mqtt start-fan start-all restart-playback restart-mqtt restart-fan restart-all deploy-configs deploy-scripts deploy-services deploy-audio deploy-all install-fan-service install-services temp off reboot throttled deploy-fan-controller build-fan-controller
 
 ping:
 	ping -c 1 $(PI_HOST)
@@ -88,7 +88,11 @@ deploy-services:
 	$(SSH) "mkdir -p $(PI_TARGET_DIR)/systemd"
 	$(RSYNC) --delete systemd/ $(REMOTE)/systemd/
 
-deploy-all: deploy-configs deploy-scripts deploy-services
+deploy-audio:
+	$(SSH) "mkdir -p $(PI_TARGET_DIR)/audio"
+	$(RSYNC) --delete audio/ $(REMOTE)/audio/
+
+deploy-all: deploy-configs deploy-scripts deploy-audio deploy-services
 
 install-fan-service: deploy-services
 	$(SSH) "sudo install -m 644 $(PI_TARGET_DIR)/systemd/$(SERVICE_NAME_FAN) $(PI_SERVICE_TARGET_DIR)/$(SERVICE_NAME_FAN)"

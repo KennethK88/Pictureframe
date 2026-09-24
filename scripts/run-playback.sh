@@ -61,6 +61,8 @@ echo "Playlist: $PLAYLIST_FILE"
 echo "Media files: $MEDIA_COUNT"
 echo "Image duration: ${MPV_IMAGE_DURATION_SECONDS}s"
 
+"$PICTUREFRAME_HOME/scripts/background-audio-control.sh" idle
+
 exec mpv \
   --vo=gpu \
   --gpu-context=drm \
@@ -70,10 +72,11 @@ exec mpv \
   --hwdec=v4l2m2m \
   --drm-drmprime-video-plane=primary \
   --drm-draw-plane=overlay \
-  --audio-device='alsa/hdmi:CARD=vc4hdmi,DEV=0' \
+  --audio-device="$MPV_AUDIO_DEVICE" \
   --image-display-duration="$MPV_IMAGE_DURATION_SECONDS" \
   --vf="lavfi=[scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2,format=yuv420p]" \
   --script="$PICTUREFRAME_HOME/scripts/location-overlay.lua" \
+  --script="$PICTUREFRAME_HOME/scripts/background-audio.lua" \
   --script-opts="location_overlay-image_duration=$MPV_IMAGE_DURATION_SECONDS,location_overlay-display_duration=5" \
   --osd-align-x=right \
   --osd-align-y=top \

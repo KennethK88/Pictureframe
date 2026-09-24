@@ -35,6 +35,16 @@ mosquitto_sub \
             systemctl poweroff
             ;;
 
+        background_audio_on)
+            echo "Enabling background audio..."
+            "$HOME/pictureframe/scripts/background-audio-control.sh" enable
+            ;;
+
+        background_audio_off)
+            echo "Disabling background audio..."
+            "$HOME/pictureframe/scripts/background-audio-control.sh" disable
+            ;;    
+
         *)
             echo "Ignoring unknown command: $command"
             ;;
