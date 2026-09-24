@@ -1,7 +1,7 @@
 local options = require "mp.options"
 
 local opts = {
-    image_duration = 30,
+    image_duration = 20,
     display_duration = 5
 }
 
