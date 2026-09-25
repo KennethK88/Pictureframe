@@ -7,6 +7,13 @@ echo "Starting pictureframe MQTT control..."
 echo "Broker: $MQTT_BROKER:$MQTT_PORT"
 echo "Client ID: $MQTT_CLIENT_ID"
 echo "Command topic: $MQTT_COMMAND_TOPIC"
+echo "Background audio topic: $MQTT_BACKGROUND_AUDIO_SET_TOPIC"
+
+run_background_audio_control()
+{
+    runuser -u kenneth -- env HOME=/home/kenneth \
+        /home/kenneth/pictureframe/scripts/background-audio-control.sh "$1"
+}
 
 mosquitto_sub \
   -h "$MQTT_BROKER" \
@@ -15,38 +22,52 @@ mosquitto_sub \
   -P "$MQTT_PASS" \
   -i "$MQTT_CLIENT_ID" \
   -t "$MQTT_COMMAND_TOPIC" \
-| while IFS= read -r command; do
-    echo "MQTT command received: $command"
+  -t "$MQTT_BACKGROUND_AUDIO_SET_TOPIC" \
+  -v \
+| while IFS=' ' read -r topic payload; do
+    echo "MQTT message received: topic=$topic payload=$payload"
 
-    case "$command" in
-        start)
-            echo "Starting pictureframe playback service..."
-            systemctl start pictureframe-playback.service
+    case "$topic" in
+        "$MQTT_COMMAND_TOPIC")
+            case "$payload" in
+                start)
+                    echo "Starting pictureframe playback service..."
+                    systemctl start pictureframe-playback.service
+                    ;;
+
+                shutdown)
+                    echo "Stopping pictureframe playback service..."
+                    systemctl stop pictureframe-playback.service || true
+
+                    echo "Syncing filesystem..."
+                    sync
+
+                    echo "Powering off..."
+                    systemctl poweroff
+                    ;;
+
+                *)
+                    echo "Ignoring unknown command: $payload"
+                    ;;
+            esac
             ;;
 
-        shutdown)
-            echo "Stopping pictureframe playback service..."
-            systemctl stop pictureframe-playback.service || true
+        "$MQTT_BACKGROUND_AUDIO_SET_TOPIC")
+            case "$payload" in
+                ON)
+                    echo "Enabling background audio..."
+                    run_background_audio_control enable
+                    ;;
 
-            echo "Syncing filesystem..."
-            sync
+                OFF)
+                    echo "Disabling background audio..."
+                    run_background_audio_control disable
+                    ;;
 
-            echo "Powering off..."
-            systemctl poweroff
-            ;;
-
-        background_audio_on)
-            echo "Enabling background audio..."
-            "$HOME/pictureframe/scripts/background-audio-control.sh" enable
-            ;;
-
-        background_audio_off)
-            echo "Disabling background audio..."
-            "$HOME/pictureframe/scripts/background-audio-control.sh" disable
-            ;;    
-
-        *)
-            echo "Ignoring unknown command: $command"
+                *)
+                    echo "Ignoring invalid background audio value: $payload"
+                    ;;
+            esac
             ;;
     esac
 done
