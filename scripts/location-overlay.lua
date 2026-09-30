@@ -7,7 +7,7 @@ local opts = {
 
 options.read_options(opts, "location_overlay")
 
-local current_location = nil
+local current_overlay_text = nil
 local file_start_time = nil
 local shown = false
 
@@ -15,7 +15,7 @@ local function trim(value)
     return value:match("^%s*(.-)%s*$")
 end
 
-local function extract_location(path)
+local function extract_overlay_text(path)
     local folder = path:match("/media/([^/]+)/")
 
     if folder == nil then
@@ -26,8 +26,7 @@ local function extract_location(path)
         return nil
     end
 
-    folder = folder:gsub("^%d%d%d%d%-%d%d%s+", "")
-    folder = folder:gsub("^%d%d%d%d%s+", "")
+    folder = folder:gsub("^(%d%d%d%d)%-%d%d%s+", "%1 ")
     folder = trim(folder)
 
     if folder == "" then
@@ -40,12 +39,12 @@ end
 local function on_file_loaded()
     local path = mp.get_property("path")
 
-    current_location = nil
+    current_overlay_text = nil
     file_start_time = mp.get_time()
     shown = false
 
     if path ~= nil then
-        current_location = extract_location(path)
+        current_overlay_text = extract_overlay_text(path)
     end
 
     -- Trigger a tiny OSD refresh shortly after loading a new file.
@@ -57,7 +56,7 @@ local function on_file_loaded()
 end
 
 local function tick()
-    if current_location == nil or file_start_time == nil or shown then
+    if current_overlay_text == nil or file_start_time == nil or shown then
         return
     end
 
@@ -71,14 +70,14 @@ local function tick()
         show_after = duration - opts.display_duration
 
         if time_pos >= show_after then
-            mp.osd_message(current_location, opts.display_duration)
+            mp.osd_message(current_overlay_text, opts.display_duration)
             shown = true
         end
     else
         show_after = opts.image_duration - opts.display_duration
 
         if elapsed >= show_after then
-            mp.osd_message(current_location, opts.display_duration)
+            mp.osd_message(current_overlay_text, opts.display_duration)
             shown = true
         end
     end
