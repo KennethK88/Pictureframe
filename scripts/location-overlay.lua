@@ -26,6 +26,7 @@ local function extract_overlay_text(path)
         return nil
     end
 
+    folder = folder:gsub("^(%d%d%d%d)%-%d%d%s+", "%1 ")
     folder = trim(folder)
 
     if folder == "" then
