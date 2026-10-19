@@ -21,7 +21,7 @@ int main()
     std::signal(SIGINT, handleSignal);
     std::signal(SIGTERM, handleSignal);
     
-    std::cout << "Pictureframe fan controller starting...\n";
+    std::cout << "Pictureframe fan controller starting..." << std::endl;
 
     CpuTemperatureReader cpuTemperatureReader;
     FanController fanController;
@@ -45,7 +45,7 @@ int main()
             continue;
         }
         
-        std::cout << "CPU temperature: " << cpuTemperature.value() << '\n';
+        std::cout << "CPU temperature: " << cpuTemperature.value() << std::endl;
         FanState fanState = fanController.updateState(cpuTemperature.value());
 
         if (!gpioFanOutput.setState(fanState))
