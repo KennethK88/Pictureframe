@@ -11,8 +11,8 @@ echo "Background audio topic: $MQTT_BACKGROUND_AUDIO_SET_TOPIC"
 
 run_background_audio_control()
 {
-    runuser -u kenneth -- env HOME=/home/kenneth \
-        /home/kenneth/pictureframe/scripts/background-audio-control.sh "$1"
+    runuser -u "$PI_USER" -- env HOME="$HOME" \
+        "$HOME/pictureframe/scripts/background-audio-control.sh" "$1"
 }
 
 mosquitto_sub \

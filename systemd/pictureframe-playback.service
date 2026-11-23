@@ -5,11 +5,11 @@ Wants=network-online.target
 
 [Service]
 Type=simple
-User=kenneth
-Environment=HOME=/home/kenneth
-WorkingDirectory=/home/kenneth/pictureframe
-ExecStart=/home/kenneth/pictureframe/scripts/run-playback.sh
-ExecStopPost=-/home/kenneth/pictureframe/scripts/background-audio-control.sh idle
+User=@PI_USER@
+Environment=HOME=/home/@PI_USER@
+WorkingDirectory=@PI_TARGET_DIR@
+ExecStart=@PI_TARGET_DIR@/scripts/run-playback.sh
+ExecStopPost=-@PI_TARGET_DIR@/scripts/background-audio-control.sh idle
 Restart=on-failure
 RestartSec=5
 SuccessExitStatus=4

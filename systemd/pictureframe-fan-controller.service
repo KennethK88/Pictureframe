@@ -3,10 +3,10 @@ Description=Pictureframe Fan Controller
 
 [Service]
 Type=simple
-User=kenneth
-Environment=HOME=/home/kenneth
-WorkingDirectory=/home/kenneth/pictureframe
-ExecStart=/home/kenneth/pictureframe/fan-controller/build/pictureframe-fan-controller
+User=@PI_USER@
+Environment=HOME=/home/@PI_USER@
+WorkingDirectory=@PI_TARGET_DIR@
+ExecStart=@PI_TARGET_DIR@/fan-controller/build/pictureframe-fan-controller
 Restart=on-failure
 RestartSec=5
 
