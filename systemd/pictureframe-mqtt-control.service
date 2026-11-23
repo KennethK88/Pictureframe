@@ -6,8 +6,9 @@ Wants=network-online.target
 [Service]
 Type=simple
 User=root
-Environment=HOME=/home/kenneth
-ExecStart=/home/kenneth/pictureframe/scripts/mqtt-control.sh
+Environment=HOME=/home/@PI_USER@
+Environment=PI_USER=@PI_USER@
+ExecStart=@PI_TARGET_DIR@/scripts/mqtt-control.sh
 Restart=always
 RestartSec=5
 

@@ -1,9 +1,18 @@
+# Runtime data
 media/
 cache/
 logs/
 playlists/
 scripts/__pycache__
 
+# Local configuration
+Makefile.local
 config/mqtt-control.env
+config/pictureframe.env
 
+# Audio files
+/audio/*
+!/audio/.gitkeep
+
+# Log files
 *.log
