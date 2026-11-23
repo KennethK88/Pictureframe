@@ -1,6 +1,9 @@
-PI_USER = kenneth
-PI_HOST = 192.168.178.94
-PI_TARGET_DIR = /home/kenneth/pictureframe
+PI_USER ?= pi
+PI_HOST ?= raspberrypi.local
+PI_TARGET_DIR ?= /home/$(PI_USER)/pictureframe
+
+-include Makefile.local
+
 PI_SERVICE_TARGET_DIR = /etc/systemd/system
 
 CONFIG_FILES = config/mqtt-control.env config/pictureframe.env
@@ -87,6 +90,10 @@ deploy-scripts:
 deploy-services:
 	$(SSH) "mkdir -p $(PI_TARGET_DIR)/systemd"
 	$(RSYNC) --delete systemd/ $(REMOTE)/systemd/
+	$(SSH) "sed -i \
+		-e 's|@PI_USER@|$(PI_USER)|g' \
+		-e 's|@PI_TARGET_DIR@|$(PI_TARGET_DIR)|g' \
+		$(PI_TARGET_DIR)/systemd/*.service"
 
 deploy-audio:
 	$(SSH) "mkdir -p $(PI_TARGET_DIR)/audio"
