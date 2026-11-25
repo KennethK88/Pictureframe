@@ -1,4 +1,17 @@
 #!/bin/bash
+
+#
+# Displays diagnostic information about the Pictureframe.
+#
+# Reports whether mpv is running, the current playlist and media count,
+# and the most recent mpv log file, if available.
+#
+# Also displays the configured media directory and OneDrive source.
+#
+# Configuration:
+#   $HOME/pictureframe/config/pictureframe.env
+#
+
 set -euo pipefail
 
 source "$HOME/pictureframe/config/pictureframe.env"

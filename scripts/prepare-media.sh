@@ -1,4 +1,24 @@
 #!/bin/bash
+
+#
+# Prepares image and video files for Pictureframe playback.
+#
+# Optimizes videos with unsupported rotation or high frame rates
+# using FFmpeg and converts high-resolution images using libvips.
+#
+# Processed media files are stored in dedicated cache directories
+# to avoid unnecessary repeated processing.
+#
+# Supports processing all media files or only files specified
+# in a supplied change list.
+#
+# Configuration:
+#   $HOME/pictureframe/config/pictureframe.env
+#
+# Dependencies:
+#   ffmpeg, ffprobe, vipsthumbnail, image-info.py
+#
+
 set -euo pipefail
 
 source "$HOME/pictureframe/config/pictureframe.env"
@@ -7,6 +27,7 @@ mkdir -p "$CACHE_DIR" "$IMAGE_CACHE_DIR"
 
 SCALE_FILTER="scale='min(1920,iw)':'min(1080,ih)':force_original_aspect_ratio=decrease:force_divisible_by=2"
 
+# Checks whether the given file has a supported video extension.
 is_video_file() {
     local file="${1,,}"
 
@@ -20,6 +41,7 @@ is_video_file() {
     esac
 }
 
+# Checks whether the given file has a supported image extension.
 is_image_file() {
     local file="${1,,}"
 
@@ -33,6 +55,8 @@ is_image_file() {
     esac
 }
 
+# Extracts the rotation metadata from the first video stream using ffprobe.
+# Returns an empty result if no rotation information is available.
 get_video_rotation() {
     local file="$1"
 
@@ -45,6 +69,8 @@ get_video_rotation() {
         | head -n 1
 }
 
+# Determines the average frame rate of the first video stream.
+# Rounds the result to the nearest integer.
 get_video_fps() {
     local file="$1"
 
@@ -61,6 +87,8 @@ get_video_fps() {
         '
 }
 
+# Determines the cache path for an optimized video file.
+# Preserves the relative directory structure and uses the MP4 extension.
 get_cache_file_path() {
     local file="$1"
     local relative="${file#$MEDIA_DIR/}"
@@ -69,6 +97,8 @@ get_cache_file_path() {
     echo "$CACHE_DIR/$without_extension.mp4"
 }
 
+# Determines the cache path for an optimized image file.
+# Preserves the relative directory structure and uses the JPEG extension.
 get_image_cache_file_path() {
     local file="$1"
     local relative="${file#$MEDIA_DIR/}"
@@ -77,6 +107,13 @@ get_image_cache_file_path() {
     echo "$IMAGE_CACHE_DIR/$without_extension.jpg"
 }
 
+# Optimizes a video for Pictureframe playback using FFmpeg.
+#
+# Applies rotation correction, limits high frame rates to 30 FPS,
+# and scales the video to fit within 1920x1080 pixels.
+#
+# Reuses an existing cached version if it is newer than the source.
+# Writes to a temporary file before replacing the cached output.
 prepare_optimized_video() {
     local file="$1"
     local rotation="$2"
@@ -152,6 +189,14 @@ prepare_optimized_video() {
     mv "$temp_output" "$output"
 }
 
+# Optimizes high-resolution images using libvips.
+#
+# Reads the image dimensions and checks the configured pixel threshold.
+# Images exceeding the threshold are resized to fit within 1920x1080
+# pixels and cached as JPEG files.
+#
+# Reuses an existing cached version if it is newer than the source.
+# Skips unreadable images and handles conversion failures gracefully.
 prepare_high_res_image() {
     local file="$1"
     local image_info
@@ -205,6 +250,13 @@ prepare_high_res_image() {
     fi
 }
 
+# Processes a media file according to its type and properties.
+#
+# Videos are optimized when rotation correction or frame rate
+# reduction is required. Images are checked for high resolution.
+#
+# If force is enabled, any existing cached version is removed
+# before processing.
 prepare_media_file() {
     local file="$1"
     local force="${2:-0}"
@@ -253,6 +305,8 @@ prepare_media_file() {
     fi
 }
 
+# Processes media files listed in the supplied text file.
+# Forces regeneration of cached versions for changed media files.
 prepare_media_from_list() {
     local list_file="$1"
 
@@ -262,6 +316,8 @@ prepare_media_from_list() {
     done < "$list_file"
 }
 
+# Recursively discovers and processes all supported media files.
+# Existing up-to-date cache files are reused whenever possible.
 prepare_all_media() {
     find "$MEDIA_DIR" -type f \( \
         -iname "*.mp4" -o \
@@ -275,6 +331,8 @@ prepare_all_media() {
     done
 }
 
+# Process the supplied list of changed files, or scan the entire
+# media directory if no list was provided.
 echo "Preparing media..."
 
 if [ "$#" -gt 0 ]; then

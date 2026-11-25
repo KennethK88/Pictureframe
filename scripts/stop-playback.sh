@@ -1,4 +1,12 @@
 #!/bin/bash
+
+#
+# Stops Pictureframe media playback.
+#
+# Checks whether an mpv process is running and terminates it if found.
+# Reports whether playback was stopped or mpv was already inactive.
+#
+
 set -euo pipefail
 
 echo "Stopping pictureframe playback..."

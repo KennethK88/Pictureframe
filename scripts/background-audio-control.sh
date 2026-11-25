@@ -1,4 +1,21 @@
 #!/bin/bash
+
+#
+# Controls optional background audio playback for the Pictureframe.
+#
+# Manages a separate mpv audio player based on the current media type
+# and the user's background audio preference.
+#
+# Background audio is played only when enabled and an image is displayed.
+# Playback is stopped during video playback or when the media player is idle.
+#
+# Configuration:
+#   $HOME/pictureframe/config/pictureframe.env
+#
+# Commands:
+#   enable, disable, image, video, idle, sync, status
+#
+
 set -euo pipefail
 
 source "$HOME/pictureframe/config/pictureframe.env"
@@ -11,6 +28,8 @@ PID_FILE="$STATE_DIR/player.pid"
 umask 077
 mkdir -p "$STATE_DIR"
 
+# Initializes persistent runtime state files with their default values
+# if they do not already exist.
 initialize_state()
 {
     if [ ! -f "$ENABLED_FILE" ]; then
@@ -30,6 +49,9 @@ initialize_state()
     fi
 }
 
+# Checks whether the background audio player is still running.
+# Validates the stored PID and verifies that it belongs to the expected
+# mpv process. Removes stale PID files when necessary.
 is_player_running()
 {
     [ -s "$PID_FILE" ] || return 1
@@ -62,6 +84,8 @@ is_player_running()
     return 0
 }
 
+# Starts background audio playback using mpv.
+# Does nothing if the expected player process is already running.
 start_player()
 {
     if is_player_running; then
@@ -96,6 +120,8 @@ start_player()
     echo "Background audio started (PID $pid)."
 }
 
+# Stops the background audio player.
+# Attempts graceful termination before forcibly killing the process.
 stop_player()
 {
     if ! is_player_running; then
@@ -124,6 +150,8 @@ stop_player()
     echo "Background audio stopped."
 }
 
+# Synchronizes background audio playback with the current runtime state.
+# Audio is played only when enabled and the active media type is an image.
 sync_player()
 {
     local enabled
@@ -139,6 +167,7 @@ sync_player()
     fi
 }
 
+# Initialize runtime state and process the requested command.
 initialize_state
 
 command="${1:-}"

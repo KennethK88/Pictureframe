@@ -1,4 +1,22 @@
 #!/bin/bash
+
+#
+# Handles MQTT-based remote control of the Pictureframe.
+#
+# Subscribes to MQTT command topics and translates incoming messages
+# into system operations.
+#
+# Supports starting media playback, shutting down the Raspberry Pi,
+# and enabling or disabling background audio.
+#
+# Configuration:
+#   $HOME/pictureframe/config/mqtt-control.env
+#
+# Supported commands:
+#   System control: start, shutdown
+#   Background audio: ON, OFF
+#
+
 set -euo pipefail
 
 source "$HOME/pictureframe/config/mqtt-control.env"
@@ -9,12 +27,17 @@ echo "Client ID: $MQTT_CLIENT_ID"
 echo "Command topic: $MQTT_COMMAND_TOPIC"
 echo "Background audio topic: $MQTT_BACKGROUND_AUDIO_SET_TOPIC"
 
+# Executes the background audio control script as the configured Pi user.
+# Ensures that the script runs with the appropriate user context.
 run_background_audio_control()
 {
     runuser -u "$PI_USER" -- env HOME="$HOME" \
         "$HOME/pictureframe/scripts/background-audio-control.sh" "$1"
 }
 
+# Subscribe to the configured MQTT topics and process incoming messages.
+# System commands control playback and shutdown through systemd.
+# Background audio commands are delegated to the audio control script.
 mosquitto_sub \
   -h "$MQTT_BROKER" \
   -p "$MQTT_PORT" \
