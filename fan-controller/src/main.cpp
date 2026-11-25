@@ -1,13 +1,23 @@
-#include <iostream>
-#include <optional>
-#include <thread>
-#include <chrono>
-#include <csignal>
 #include "Types.h"
 #include "CpuTemperatureReader.h"
 #include "FanController.h"
 #include "GpioFanOutput.h"
 #include "HardwareConfig.h"
+
+#include <iostream>
+#include <optional>
+#include <thread>
+#include <chrono>
+#include <csignal>
+
+/**
+ * @file main.cpp
+ * @brief Implements the main application of the Pictureframe fan controller.
+ *
+ * Coordinates CPU temperature monitoring and GPIO-based fan control.
+ * Handles termination signals and applies a fail-safe strategy
+ * when CPU temperature readings fail.
+ */
 
 volatile std::sig_atomic_t stopRequested = 0;
 

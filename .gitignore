@@ -23,3 +23,6 @@ config/pictureframe.env
 
 # Sliced 3D printing files
 *.gcode
+
+# Generated documentation
+docs/html/
