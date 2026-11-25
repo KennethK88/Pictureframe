@@ -1,3 +1,15 @@
+--[[
+    Pictureframe – Location Overlay
+
+    Displays location information during media playback using mpv's OSD.
+
+    Extracts location information from the media file's directory name
+    and displays it shortly before the current media finishes.
+
+    Supports configurable image and overlay display durations.
+    Location information is displayed only once per media file.
+]]
+
 local options = require "mp.options"
 
 local opts = {
@@ -11,10 +23,15 @@ local current_overlay_text = nil
 local file_start_time = nil
 local shown = false
 
+-- Removes leading and trailing whitespace from a string.
 local function trim(value)
     return value:match("^%s*(.-)%s*$")
 end
 
+-- Extracts location information from a media or cache file path.
+-- Normalizes directory names by removing the month from date prefixes
+-- while preserving the year and location information.
+-- Returns nil if no valid location information can be extracted.
 local function extract_overlay_text(path)
     local folder = path:match("/media/([^/]+)/")
 
@@ -36,6 +53,9 @@ local function extract_overlay_text(path)
     return folder
 end
 
+-- Initializes the overlay state when a new media file is loaded.
+-- Extracts the location text and triggers a small OSD refresh
+-- to prevent stale image rendering on DRM/GPU output.
 local function on_file_loaded()
     local path = mp.get_property("path")
 
@@ -55,6 +75,10 @@ local function on_file_loaded()
     end)
 end
 
+-- Periodically checks whether the location overlay should be displayed.
+-- Shows the overlay shortly before the media finishes.
+-- Uses the configured image duration if no media duration is available.
+-- Ensures that the overlay is displayed only once per media file.
 local function tick()
     if current_overlay_text == nil or file_start_time == nil or shown then
         return
@@ -83,5 +107,6 @@ local function tick()
     end
 end
 
+-- Register the media loading event and periodic overlay timer.
 mp.register_event("file-loaded", on_file_loaded)
 mp.add_periodic_timer(0.5, tick)

@@ -16,3 +16,13 @@ config/pictureframe.env
 
 # Log files
 *.log
+
+# FreeCAD backup files
+*.FCStd[0-9]*
+*.FCBak
+
+# Sliced 3D printing files
+*.gcode
+
+# Generated documentation
+docs/html/

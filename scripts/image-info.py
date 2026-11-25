@@ -1,5 +1,14 @@
 #!/usr/bin/env python3
 
+"""
+Reads image dimensions from JPEG and PNG files.
+
+Extracts image dimensions directly from file headers without
+decoding the image data.
+
+Outputs width, height, and pixel count as semicolon-separated values.
+"""
+
 import struct
 import sys
 from pathlib import Path
@@ -14,6 +23,19 @@ JPEG_SOF_MARKERS = {
 
 
 def get_jpeg_size(path: Path):
+    """
+    Reads the dimensions of a JPEG image.
+
+    Searches the JPEG file for a Start of Frame marker containing
+    the image dimensions.
+
+    Args:
+        path: Path to the JPEG file.
+
+    Returns:
+        Tuple containing width and height, or None if the
+        dimensions cannot be determined.
+    """
     with path.open("rb") as file:
         if file.read(2) != b"\xff\xd8":
             return None
@@ -67,6 +89,18 @@ def get_jpeg_size(path: Path):
 
 
 def get_png_size(path: Path):
+    """
+    Reads the dimensions of a PNG image.
+
+    Extracts width and height directly from the PNG header.
+
+    Args:
+        path: Path to the PNG file.
+
+    Returns:
+        Tuple containing width and height, or None if the
+        PNG signature is invalid.
+    """
     with path.open("rb") as file:
         header = file.read(24)
 
@@ -78,6 +112,18 @@ def get_png_size(path: Path):
 
 
 def get_image_size(path: Path):
+    """
+    Determines the dimensions of a supported image file.
+
+    Selects the appropriate reader based on the file extension.
+
+    Args:
+        path: Path to the image file.
+
+    Returns:
+        Tuple containing width and height, or None if the
+        image format is unsupported or dimensions cannot be determined.
+    """
     suffix = path.suffix.lower()
 
     if suffix in (".jpg", ".jpeg"):
@@ -90,6 +136,16 @@ def get_image_size(path: Path):
 
 
 def main():
+    """
+    Executes the image information command-line utility.
+
+    Reads the dimensions of the specified image and prints
+    width, height, and pixel count separated by semicolons.
+
+    Returns:
+        0 on success, 1 if image processing fails,
+        or 2 if the command-line arguments are invalid.
+    """
     if len(sys.argv) != 2:
         print("Usage: image-info.py <image-file>", file=sys.stderr)
         return 2

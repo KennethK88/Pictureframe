@@ -1,8 +1,31 @@
 #!/bin/bash
+
+#
+# Coordinates media preparation and playback for the Pictureframe.
+#
+# Synchronizes media files, prepares changed images and videos,
+# and generates the playback playlist.
+#
+# Attempts to wake the display via HDMI-CEC and waits for an active
+# HDMI connection before starting mpv.
+#
+# Playback runs in fullscreen mode with shuffled, continuous playback.
+# Lua extensions provide location overlays and background audio control.
+#
+# Configuration:
+#   $HOME/pictureframe/config/pictureframe.env
+#
+# Dependencies:
+#   mpv, cec-client
+#
+
 set -euo pipefail
 
 source "$HOME/pictureframe/config/pictureframe.env"
 
+# Waits until an HDMI connection is detected through the DRM subsystem.
+# Polls the connector status periodically and allows additional time
+# for the display connection to stabilize.
 wait_for_hdmi()
 {
     echo "Waiting for HDMI connection..."
@@ -32,6 +55,8 @@ wait_for_hdmi()
     done
 }
 
+# Synchronize media, prepare changed files, and generate the playlist.
+# Abort playback if the resulting playlist contains no media files.
 echo "Preparing pictureframe playback..."
 
 "$PICTUREFRAME_HOME/scripts/sync-media.sh"
@@ -63,6 +88,8 @@ echo "Image duration: ${MPV_IMAGE_DURATION_SECONDS}s"
 
 "$PICTUREFRAME_HOME/scripts/background-audio-control.sh" idle
 
+# Replace the shell process with mpv for continuous fullscreen playback.
+# Configure DRM video output, playback behavior, Lua extensions, and OSD.
 exec mpv \
   --vo=gpu \
   --gpu-context=drm \

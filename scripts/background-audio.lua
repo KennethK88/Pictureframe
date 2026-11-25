@@ -1,3 +1,17 @@
+--[[
+    Pictureframe – Background Audio Integration
+
+    Integrates background audio control into mpv playback.
+
+    Detects whether the current media is an image or video and notifies
+    the background audio control script accordingly.
+
+    Monitors changes to the background audio preference and synchronizes
+    playback when the setting changes.
+
+    Background audio is stopped when mpv shuts down.
+]]
+
 local CONTROL_SCRIPT =
     os.getenv("HOME") .. "/pictureframe/scripts/background-audio-control.sh"
 
@@ -6,6 +20,8 @@ local ENABLED_FILE =
 
 local last_enabled = nil
 
+-- Executes a command through the background audio control script.
+-- Logs command failures and informational output.
 local function run_control(command)
     local result = mp.command_native({
         name = "subprocess",
@@ -30,6 +46,8 @@ local function run_control(command)
     end
 end
 
+-- Determines whether the current media is an image.
+-- Inspects the mpv track list to distinguish images from video.
 local function is_image()
     local tracks = mp.get_property_native("track-list", {})
 
@@ -49,6 +67,8 @@ local function is_image()
     return has_image and not has_video
 end
 
+-- Reads the current background audio preference from the runtime state file.
+-- Returns nil if the file cannot be opened.
 local function read_enabled()
     local file = io.open(ENABLED_FILE, "r")
 
@@ -62,6 +82,8 @@ local function read_enabled()
     return value
 end
 
+-- Notifies the background audio controller when new media is loaded.
+-- Initializes the cached background audio preference.
 mp.add_hook("on_preloaded", 50, function()
     if is_image() then
         run_control("image")
@@ -72,6 +94,8 @@ mp.add_hook("on_preloaded", 50, function()
     last_enabled = read_enabled()
 end)
 
+-- Checks for changes to the background audio preference every second.
+-- Synchronizes playback only when the preference has changed.
 mp.add_periodic_timer(1.0, function()
     local enabled = read_enabled()
 
@@ -81,6 +105,7 @@ mp.add_periodic_timer(1.0, function()
     end
 end)
 
+-- Notifies the background audio controller when mpv shuts down.
 mp.register_event("shutdown", function()
     run_control("idle")
 end)
