@@ -1,0 +1,81 @@
+@startuml
+
+title Pictureframe - System Architecture
+
+skinparam componentStyle rectangle
+skinparam shadowing false
+
+' ============================================================
+' Pictureframe
+' ============================================================
+
+node "Raspberry Pi 3 Model A+" as pi {
+
+    component "Playback Service\n(systemd)" as playback
+
+    component "MQTT Control Service\n(systemd)" as mqttControl
+
+    component "Fan Controller Service\n(systemd)" as fanController
+
+    folder "Local Media Storage" as media
+
+    playback --> media : Media management
+    mqttControl --> playback : Playback and\nbackground audio control
+}
+
+' ============================================================
+' External Systems
+' ============================================================
+
+cloud "OneDrive" as onedrive
+
+node "Home Assistant Environment" as haEnvironment {
+
+    component "Mosquitto Broker" as broker
+    component "Home Assistant" as ha
+}
+
+actor "User" as user
+
+' ============================================================
+' Hardware
+' ============================================================
+
+component "HDMI Display" as display
+component "Cooling Fan" as fan
+
+' ============================================================
+' Communication
+' ============================================================
+
+onedrive --> playback : Media synchronization
+
+broker --> mqttControl : MQTT commands
+ha <--> broker : MQTT topics
+user <--> ha : Dashboard
+
+playback --> display : HDMI\nImages, video, audio
+
+fanController --> fan : GPIO switching
+
+' ============================================================
+' Notes
+' ============================================================
+
+note right of pi
+    Playback:
+    - Media synchronization and preparation
+    - Image and video playback
+    - Background audio
+
+    Remote control:
+    - MQTT commands
+    - Playback control
+    - System shutdown
+
+    Hardware management:
+    - CPU temperature monitoring
+    - Temperature-dependent fan control
+end note
+
+@enduml

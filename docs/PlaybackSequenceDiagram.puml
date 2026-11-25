@@ -1,0 +1,86 @@
+@startuml
+
+title Pictureframe - Playback Sequence
+
+hide footbox
+autonumber
+skinparam sequenceMessageAlign center
+skinparam ParticipantPadding 18
+
+actor "systemd" as Systemd
+participant "run-playback.sh" as Playback
+participant "sync-media.sh" as Sync
+participant "prepare-media.sh" as Prepare
+participant "create-playlist.sh" as Playlist
+participant "HDMI Display" as Display
+participant "Background Audio\nController" as Audio
+participant "mpv" as Mpv
+
+note over Systemd, Playback
+    The playback service starts the initialization
+    sequence before launching mpv.
+end note
+
+== Initialization ==
+
+Systemd -> Playback: Start playback service
+activate Playback
+
+note right of Playback
+    Load configuration
+    from pictureframe.env.
+end note
+
+== Media synchronization and preparation ==
+
+Playback -> Sync: Synchronize media
+Sync --> Playback: Synchronization completed
+
+alt New or changed media available
+    Playback -> Prepare: Prepare changed media
+    Prepare --> Playback: Preparation completed
+else No changes
+    note over Playback
+        Skip media preparation.
+    end note
+end
+
+== Playlist generation ==
+
+Playback -> Playlist: Generate playlist
+Playlist --> Playback: Playlist generated
+
+break Playlist is empty
+    Playback --> Systemd: Exit with error
+end
+
+== Display initialization ==
+
+Playback -> Display: Send HDMI-CEC wake request
+Playback -> Display: Wait for HDMI connection
+Display --> Playback: HDMI connected
+
+== Playback ==
+
+Playback -> Audio: Set idle state
+
+Playback -> Mpv: exec mpv with playlist\nand Lua extensions
+deactivate Playback
+activate Mpv
+
+note over Playback, Mpv
+    exec replaces the Bash process
+    with the mpv process.
+end note
+
+loop Continuous shuffled playback
+    Mpv -> Display: Display image or video
+
+    note right of Mpv
+        Lua extensions:
+        - Location overlay
+        - Background audio coordination
+    end note
+end
+
+@enduml
